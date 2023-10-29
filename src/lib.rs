@@ -31,6 +31,7 @@ impl TelegramExtension for Telegram {
             "reply_to_message_id": msg.id,
             "text": text,
         });
+        log::info!("reply message: {}", body);
         self.request(tg_flows::Method::SendMessage, body.to_string().as_bytes())
     }
 }
@@ -55,7 +56,7 @@ async fn handler(update: Update) {
 
     if let UpdateKind::Message(msg) = update.kind {
         let chat_id = msg.chat.id;
-        log::info!("[updated] Received message from {}", chat_id);
+        log::info!("Received message from {}", chat_id);
 
         let mut openai = OpenAIFlows::new();
         openai.set_retry_times(3);
