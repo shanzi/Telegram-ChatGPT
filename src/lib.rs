@@ -55,7 +55,7 @@ async fn handler(update: Update) {
 
     if let UpdateKind::Message(msg) = update.kind {
         let chat_id = msg.chat.id;
-        log::info!("Received message from {}", chat_id);
+        log::info!("[updated] Received message from {}", chat_id);
 
         let mut openai = OpenAIFlows::new();
         openai.set_retry_times(3);
