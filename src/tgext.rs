@@ -1,4 +1,4 @@
-use tg_flows::{BotCommand, ChatId, Message, Telegram};
+use tg_flows::{BotCommand, Message, Telegram};
 
 pub trait TgExt {
     fn reply_to_message<T>(&self, msg: &Message, text: T) -> anyhow::Result<Message>

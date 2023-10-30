@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::tgext::TgExt;
 use openai_flows::OpenAIFlows;
-use tg_flows::{BotCommand, ChatId, Telegram, Update};
+use tg_flows::{BotCommand, ChatId, Telegram, Update, UpdateKind};
 
 #[derive(Clone)]
 enum TgBotCommand {
@@ -65,13 +65,13 @@ impl TgBot {
         self.tg.set_my_commands(bot_cmds)
     }
 
-    pub fn handle_update(&self, update: Update) -> anyhow::Result<tg_flows::Message> {
-        self.set_root_commands()?;
-        if let Some(chat) = update.chat() {
-            self.set_typing(chat.id)?;
-            self.show_help_message(chat.id)
+    pub fn handle_update(&self, update: Update) -> anyhow::Result<()> {
+        // self.set_root_commands()?;
+        if let UpdateKind::Message(msg) = update.kind {
+            // self.set_typing(msg.chat.id)?;
+            self.show_help_message(msg.chat.id).map(|_| ())
         } else {
-            anyhow::bail!("skip")
+            Ok(())
         }
     }
 

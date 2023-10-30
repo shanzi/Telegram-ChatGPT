@@ -15,7 +15,7 @@ pub async fn on_deploy() {
 
 #[update_handler]
 async fn handler(update: Update) {
-    TgBot::default().handle_update(update).unwrap();
+    TgBot::default().handle_update(update);
 }
 
 // #[update_handler]
