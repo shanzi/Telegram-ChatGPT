@@ -66,6 +66,7 @@ impl TgBot {
     }
 
     pub fn handle_update(&self, update: Update) -> anyhow::Result<tg_flows::Message> {
+        self.set_root_commands()?;
         if let Some(chat) = update.chat() {
             self.set_typing(chat.id)?;
             self.show_help_message(chat.id)
