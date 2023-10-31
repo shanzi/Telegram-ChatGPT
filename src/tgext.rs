@@ -10,11 +10,11 @@ pub trait TgExt {
         T: IntoIterator,
         T::Item: Into<BotCommand>;
 
-    fn send_message_with_reply_markup<T>(
+    fn send_message_ext<T>(
         &self,
         chat_id: ChatId,
         text: T,
-        reply_markup: ReplyMarkup,
+        reply_markup: Option<ReplyMarkup>,
     ) -> anyhow::Result<Message>
     where
         T: Into<String>;
@@ -29,6 +29,7 @@ impl TgExt for Telegram {
         let body = serde_json::json!({
             "chat_id": msg.chat.id,
             "reply_to_message_id": msg.id.0,
+            "parse_mode": "MarkdownV2",
             "text": text,
         });
         log::info!("reply message: {}", body);
@@ -48,11 +49,11 @@ impl TgExt for Telegram {
         self.request(tg_flows::Method::SetMyCommands, body.to_string().as_bytes())
     }
 
-    fn send_message_with_reply_markup<T>(
+    fn send_message_ext<T>(
         &self,
         chat_id: ChatId,
         text: T,
-        reply_markup: ReplyMarkup,
+        reply_markup: Option<ReplyMarkup>,
     ) -> anyhow::Result<Message>
     where
         T: Into<String>,
@@ -60,6 +61,7 @@ impl TgExt for Telegram {
         let body = serde_json::json!({
             "chat_id": chat_id,
             "text": text.into(),
+            "parse_mode": "MarkdownV2",
             "reply_markup": reply_markup,
         });
         self.request(tg_flows::Method::SetMyCommands, body.to_string().as_bytes())

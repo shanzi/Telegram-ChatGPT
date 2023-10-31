@@ -1,6 +1,7 @@
 use std::fmt;
 
 use crate::tgext::TgExt;
+use flowsnet_platform_sdk::logger;
 use openai_flows::{
     chat::{ChatModel, ChatOptions},
     OpenAIFlows,
@@ -110,13 +111,13 @@ impl TgBot {
     }
 
     async fn handle_ask(&self, msg: &Message) -> anyhow::Result<tg_flows::Message> {
-        let question = match msg.text() {
-            Some(t) if !t.trim_start_matches("/ask ").is_empty() => {
-                Some(t.trim_start_matches("/ask "))
-            }
-            _ => None,
-        };
-        if let Some(question) = question {
+        logger::init();
+        if let Some(question) = msg
+            .text()
+            .into_iter()
+            .flat_map(|s| s.strip_prefix("/ask "))
+            .next()
+        {
             let placeholder = self.tg.reply_to_message(msg, "...")?;
             self.set_typing(msg.chat.id)?;
 
@@ -129,10 +130,12 @@ impl TgBot {
             let par = format!("tp-{}-{}", msg.chat.id, msg.id);
             let cur = format!("tp-{}-{}", msg.chat.id, placeholder.id);
 
+            log::info!("pointers: par: {}, cur: {}", par, cur);
             let root = match store_flows::get(&par) {
                 Some(p) => p.as_str().unwrap().to_owned(),
                 None => par,
             };
+            log::info!("pointers root: {}", root);
 
             let chat_ctx_id = format!("ctx--{}", root);
 
@@ -153,10 +156,10 @@ impl TgBot {
                 ),
             }
         } else {
-            self.tg.send_message_with_reply_markup(
+            self.tg.send_message_ext(
                 msg.chat.id,
                 "May I help you?",
-                tg_flows::ReplyMarkup::ForceReply(ForceReply::new()),
+                Some(tg_flows::ReplyMarkup::ForceReply(ForceReply::new())),
             )
         }
     }
