@@ -126,8 +126,8 @@ impl TgBot {
             log::info!("reply to message: {}", msg.id);
             let placeholder = self.tg.reply_to_message(msg, "typing...")?;
 
-            log::info!("set to typing, chat id: {}", msg.chat.id);
-            self.set_typing(msg.chat.id)?;
+            // log::info!("set to typing, chat id: {}", msg.chat.id);
+            // self.set_typing(msg.chat.id)?;
 
             let mut copt = ChatOptions::default();
 
@@ -167,7 +167,7 @@ impl TgBot {
             log::info!("force reply: {}", msg.chat.id);
             self.tg.send_message_ext(
                 msg.chat.id,
-                "May I help you?",
+                "How can I help you?",
                 Some(tg_flows::ReplyMarkup::ForceReply(ForceReply::new())),
             )
         }
