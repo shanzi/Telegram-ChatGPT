@@ -66,6 +66,6 @@ impl TgExt for Telegram {
             "text": text.into(),
             "reply_markup": markup_value,
         });
-        self.request(tg_flows::Method::SetMyCommands, body.to_string().as_bytes())
+        self.request(tg_flows::Method::SendMessage, body.to_string().as_bytes())
     }
 }
