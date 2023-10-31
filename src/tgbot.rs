@@ -135,19 +135,13 @@ impl TgBot {
             copt.restart = true;
             copt.system_prompt = Some(DEFAULT_PROMPT);
 
-            let par = format!("tp-{}-{}", msg.chat.id, msg.id);
-            let cur = format!("tp-{}-{}", msg.chat.id, placeholder.id);
+            let mut root = &placeholder;
+            while root.reply_to_message().is_some() {
+                root = &root.reply_to_message().unwrap();
+            }
 
-            log::info!("pointers: par: {}, cur: {}", par, cur);
-            let root = match store_flows::get(&par) {
-                Some(p) => p.as_str().unwrap().to_owned(),
-                None => par,
-            };
-            log::info!("pointers root: {}", root);
-
-            let chat_ctx_id = format!("ctx--{}", root);
-
-            store_flows::set(&cur, serde_json::Value::String(root), None);
+            log::info!("pointers root: {}", root.id);
+            let chat_ctx_id = format!("ctx--{}-{}", root.chat.id, root.id);
 
             match self
                 .openai
