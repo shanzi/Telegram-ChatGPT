@@ -1,4 +1,4 @@
-use tg_flows::{BotCommand, Message, Telegram};
+use tg_flows::{BotCommand, ChatId, Message, ReplyMarkup, Telegram};
 
 pub trait TgExt {
     fn reply_to_message<T>(&self, msg: &Message, text: T) -> anyhow::Result<Message>
@@ -9,6 +9,15 @@ pub trait TgExt {
     where
         T: IntoIterator,
         T::Item: Into<BotCommand>;
+
+    fn send_message_with_reply_markup<T>(
+        &self,
+        chat_id: ChatId,
+        text: T,
+        reply_markup: ReplyMarkup,
+    ) -> anyhow::Result<Message>
+    where
+        T: Into<String>;
 }
 
 impl TgExt for Telegram {
@@ -36,6 +45,23 @@ impl TgExt for Telegram {
             "commands": commands,
         });
         log::info!("set bot command: {}", body);
+        self.request(tg_flows::Method::SetMyCommands, body.to_string().as_bytes())
+    }
+
+    fn send_message_with_reply_markup<T>(
+        &self,
+        chat_id: ChatId,
+        text: T,
+        reply_markup: ReplyMarkup,
+    ) -> anyhow::Result<Message>
+    where
+        T: Into<String>,
+    {
+        let body = serde_json::json!({
+            "chat_id": chat_id,
+            "text": text.into(),
+            "reply_markup": reply_markup,
+        });
         self.request(tg_flows::Method::SetMyCommands, body.to_string().as_bytes())
     }
 }
