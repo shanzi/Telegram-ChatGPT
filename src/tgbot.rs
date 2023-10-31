@@ -124,7 +124,7 @@ impl TgBot {
             .next()
         {
             log::info!("reply to message: {}", msg.id);
-            let placeholder = self.tg.reply_to_message(msg, "...")?;
+            let placeholder = self.tg.reply_to_message(msg, "typing...")?;
 
             log::info!("set to typing, chat id: {}", msg.chat.id);
             self.set_typing(msg.chat.id)?;
@@ -164,6 +164,7 @@ impl TgBot {
                 ),
             }
         } else {
+            log::info!("force reply: {}", msg.chat.id);
             self.tg.send_message_ext(
                 msg.chat.id,
                 "May I help you?",

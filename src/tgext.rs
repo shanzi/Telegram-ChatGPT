@@ -58,11 +58,15 @@ impl TgExt for Telegram {
     where
         T: Into<String>,
     {
+        let markup_value = match reply_markup {
+            Some(markup) => serde_json::to_value(markup)?,
+            _ => serde_json::Value::Null,
+        };
         let body = serde_json::json!({
             "chat_id": chat_id,
             "text": text.into(),
             "parse_mode": "MarkdownV2",
-            "reply_markup": reply_markup,
+            "reply_markup": markup_value,
         });
         self.request(tg_flows::Method::SetMyCommands, body.to_string().as_bytes())
     }
