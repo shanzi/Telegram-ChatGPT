@@ -29,7 +29,6 @@ impl TgExt for Telegram {
         let body = serde_json::json!({
             "chat_id": msg.chat.id,
             "reply_to_message_id": msg.id.0,
-            "parse_mode": "MarkdownV2",
             "text": text,
         });
         log::info!("reply message: {}", body);
@@ -65,7 +64,6 @@ impl TgExt for Telegram {
         let body = serde_json::json!({
             "chat_id": chat_id,
             "text": text.into(),
-            "parse_mode": "MarkdownV2",
             "reply_markup": markup_value,
         });
         self.request(tg_flows::Method::SetMyCommands, body.to_string().as_bytes())
