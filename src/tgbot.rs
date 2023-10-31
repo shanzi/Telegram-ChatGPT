@@ -14,6 +14,9 @@ You can answer questions, help clients learn japanese and show a help message.
 your creator is Chase Zhang, you are based on OpenAI's ChatGPT.
 You should double check the fact of your answer carefully before replying a message
 and make sure it is acurate.
+You should format your answers into markdown format if necessary.
+If you answer includes codeblocks, please make sure you will specify the name
+of the programming language with proper syntax in markdown format.
 "#;
 
 #[derive(Clone)]
@@ -78,6 +81,7 @@ impl TgBot {
     }
 
     pub async fn handle_update(&self, update: Update) -> anyhow::Result<()> {
+        logger::init();
         if let UpdateKind::Message(msg) = update.kind {
             let chat_id = msg.chat.id;
             match msg.text() {
@@ -111,14 +115,18 @@ impl TgBot {
     }
 
     async fn handle_ask(&self, msg: &Message) -> anyhow::Result<tg_flows::Message> {
-        logger::init();
+        log::info!("handle ask: {}", msg.text().unwrap_or("None"));
+
         if let Some(question) = msg
             .text()
             .into_iter()
             .flat_map(|s| s.strip_prefix("/ask "))
             .next()
         {
+            log::info!("reply to message: {}", msg.id);
             let placeholder = self.tg.reply_to_message(msg, "...")?;
+
+            log::info!("set to typing, chat id: {}", msg.chat.id);
             self.set_typing(msg.chat.id)?;
 
             let mut copt = ChatOptions::default();
