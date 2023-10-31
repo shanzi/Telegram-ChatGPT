@@ -150,7 +150,7 @@ impl TgBot {
             {
                 Ok(resp) => self
                     .tg
-                    .edit_message_text(msg.chat.id, placeholder.id, resp.choice),
+                    .edit_message_markdown(msg.chat.id, placeholder.id, resp.choice),
                 Err(_) => self.tg.edit_message_text(
                     msg.chat.id,
                     placeholder.id,

@@ -1,4 +1,4 @@
-use tg_flows::{BotCommand, ChatId, Message, ReplyMarkup, Telegram};
+use tg_flows::{BotCommand, ChatId, Message, MessageId, ReplyMarkup, Telegram};
 
 pub trait TgExt {
     fn reply_to_message<T>(&self, msg: &Message, text: T) -> anyhow::Result<Message>
@@ -15,6 +15,15 @@ pub trait TgExt {
         chat_id: ChatId,
         text: T,
         reply_markup: Option<ReplyMarkup>,
+    ) -> anyhow::Result<Message>
+    where
+        T: Into<String>;
+
+    fn edit_message_markdown<T>(
+        &self,
+        chat_id: ChatId,
+        message_id: MessageId,
+        text: T,
     ) -> anyhow::Result<Message>
     where
         T: Into<String>;
@@ -67,5 +76,27 @@ impl TgExt for Telegram {
             "reply_markup": markup_value,
         });
         self.request(tg_flows::Method::SendMessage, body.to_string().as_bytes())
+    }
+
+    fn edit_message_markdown<T>(
+        &self,
+        chat_id: ChatId,
+        message_id: MessageId,
+        text: T,
+    ) -> anyhow::Result<Message>
+    where
+        T: Into<String>,
+    {
+        let text = text.into();
+        let body = serde_json::json!({
+            "chat_id": chat_id,
+            "message_id": message_id.0,
+            "parse_mode": "MarkdownV2",
+            "text": text,
+        });
+        self.request(
+            tg_flows::Method::EditMessageText,
+            body.to_string().as_bytes(),
+        )
     }
 }
