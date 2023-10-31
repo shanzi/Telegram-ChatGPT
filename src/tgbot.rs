@@ -85,6 +85,7 @@ impl TgBot {
         if let UpdateKind::Message(msg) = update.kind {
             let chat_id = msg.chat.id;
             match msg.text() {
+                Some(_) if msg.reply_to_message().is_some() => self.handle_ask(&msg).await,
                 Some(text) if text.starts_with("/ask") => self.handle_ask(&msg).await,
                 Some(text) if text.starts_with("/nihongo") => self.handle_nihongo(&msg),
                 _ => self.show_help_message(chat_id),
@@ -115,19 +116,18 @@ impl TgBot {
     }
 
     async fn handle_ask(&self, msg: &Message) -> anyhow::Result<tg_flows::Message> {
-        log::info!("handle ask: {}", msg.text().unwrap_or("None"));
+        let text = msg.text().unwrap();
+        log::info!("handle ask: {}", text);
 
-        if let Some(question) = msg
-            .text()
-            .into_iter()
-            .flat_map(|s| s.strip_prefix("/ask "))
-            .next()
-        {
+        if msg.reply_to_message().is_some() || text.starts_with("/ask ") {
+            let question = text.strip_prefix("/ask ").unwrap_or(text);
+
             log::info!("reply to message: {}", msg.id);
             let placeholder = self.tg.reply_to_message(msg, "typing...")?;
 
-            // log::info!("set to typing, chat id: {}", msg.chat.id);
-            // self.set_typing(msg.chat.id)?;
+            log::info!("set to typing, chat id: {}", msg.chat.id);
+            // ignore callback result
+            let _ = self.set_typing(msg.chat.id);
 
             let mut copt = ChatOptions::default();
 
