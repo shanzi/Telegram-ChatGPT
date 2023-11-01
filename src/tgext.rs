@@ -29,6 +29,26 @@ pub trait TgExt {
         T: Into<String>;
 }
 
+fn escape_markdown<T>(text: T) -> String
+where
+    T: AsRef<str>,
+{
+    let mut escaped_string = String::new();
+    for c in text.as_ref().chars() {
+        match c {
+            '_' | '*' | '[' | ']' | '(' | ')' | '~' | '`' | '>' | '#' | '+' | '-' | '=' | '|'
+            | '{' | '}' | '.' | '!' => {
+                escaped_string.push('\\');
+            }
+            _ => {}
+        }
+
+        escaped_string.push(c);
+    }
+
+    escaped_string
+}
+
 impl TgExt for Telegram {
     fn reply_to_message<T>(&self, msg: &Message, text: T) -> anyhow::Result<Message>
     where
@@ -72,7 +92,8 @@ impl TgExt for Telegram {
         };
         let body = serde_json::json!({
             "chat_id": chat_id,
-            "text": text.into(),
+            "parse_mode": "MarkdownV2",
+            "text": escape_markdown(text.into()),
             "reply_markup": markup_value,
         });
         self.request(tg_flows::Method::SendMessage, body.to_string().as_bytes())
@@ -87,12 +108,11 @@ impl TgExt for Telegram {
     where
         T: Into<String>,
     {
-        let text = text.into();
         let body = serde_json::json!({
             "chat_id": chat_id,
             "message_id": message_id.0,
-            "parse_mode": "MarkdownV2".to_string(),
-            "text": text,
+            "parse_mode": "MarkdownV2",
+            "text": escape_markdown(text.into()),
         });
         log::info!("edit message: {}", body);
         self.request(
