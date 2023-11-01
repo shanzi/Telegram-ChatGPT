@@ -132,7 +132,7 @@ impl TgBot {
             let mut copt = ChatOptions::default();
 
             copt.model = ChatModel::GPT35Turbo16K;
-            copt.restart = true;
+            copt.restart = false;
             copt.system_prompt = Some(DEFAULT_PROMPT);
 
             let root = TgBot::get_root_message(msg);
