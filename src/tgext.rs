@@ -91,9 +91,10 @@ impl TgExt for Telegram {
         let body = serde_json::json!({
             "chat_id": chat_id,
             "message_id": message_id.0,
-            "parse_mode": "MarkdownV2",
+            "parse_mode": "MarkdownV2".to_string(),
             "text": text,
         });
+        log::info!("edit message: {}", body);
         self.request(
             tg_flows::Method::EditMessageText,
             body.to_string().as_bytes(),
