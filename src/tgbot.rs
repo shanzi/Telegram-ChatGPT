@@ -142,8 +142,19 @@ impl TgBot {
 
             TgBot::set_message_context(&placeholder, &chat_ctx);
 
-            let chat_id = chat_ctx.as_str().unwrap();
-            match self.openai.chat_completion(chat_id, question, &copt).await {
+            let chat_ctx_id = chat_ctx.as_str().unwrap();
+            log::info!(
+                "placeholder: {} root: {}, chat_ctx: {}",
+                placeholder.id,
+                root.id,
+                chat_ctx_id
+            );
+
+            match self
+                .openai
+                .chat_completion(chat_ctx_id, question, &copt)
+                .await
+            {
                 Ok(resp) => self
                     .tg
                     .edit_message_markdown(msg.chat.id, placeholder.id, resp.choice),
@@ -183,7 +194,9 @@ impl TgBot {
     fn set_message_context(msg: &Message, ctx: &serde_json::Value) {
         let mut root = msg;
         loop {
-            store_flows::set(&TgBot::get_message_ptr(root), ctx.clone(), None);
+            let key = &TgBot::get_message_ptr(root);
+            log::info!("set context, key: {}, value: {}", key, ctx);
+            store_flows::set(key, ctx.clone(), None);
             if let Some(reply) = root.reply_to_message() {
                 root = reply;
             } else {
