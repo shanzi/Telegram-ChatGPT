@@ -142,7 +142,8 @@ impl TgBot {
 
             TgBot::set_message_context(&placeholder, &chat_ctx);
 
-            let chat_ctx_id = chat_ctx.as_str().unwrap();
+            let chat_ptr = chat_ctx.as_str().unwrap();
+            let chat_ctx_id = format!("ctx--{}", chat_ptr);
             log::info!(
                 "placeholder: {} root: {}, chat_ctx: {}",
                 placeholder.id,
@@ -152,7 +153,7 @@ impl TgBot {
 
             match self
                 .openai
-                .chat_completion(chat_ctx_id, question, &copt)
+                .chat_completion(&chat_ctx_id, question, &copt)
                 .await
             {
                 Ok(resp) => self
