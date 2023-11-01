@@ -36,9 +36,9 @@ where
     let mut escaped_string = String::new();
     for c in text.as_ref().chars() {
         match c {
-            '_' | '*' | '[' | ']' | '(' | ')' | '~' | '`' | '>' | '#' | '+' | '-' | '=' | '|'
-            | '{' | '}' | '.' | '!' => {
-                escaped_string.push_str("\\\\");
+            // TODO: support links
+            '#' | '.' | '!' | '+' | '-' | '=' | '{' | '}' | '[' | ']' | '(' | ')' => {
+                escaped_string.push('\\');
             }
             _ => {}
         }
