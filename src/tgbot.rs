@@ -150,7 +150,7 @@ impl TgBot {
                 chat_ctx_id
             );
 
-            match self
+            let res = match self
                 .openai
                 .chat_completion(chat_ctx_id, question, &copt)
                 .await
@@ -163,7 +163,13 @@ impl TgBot {
                     placeholder.id,
                     "Sorry, an error has occured. Please try again later.",
                 ),
+            };
+
+            if let Ok(ref edited) = res {
+                TgBot::set_message_context(edited, &chat_ctx);
             }
+
+            res
         } else {
             log::info!("force reply: {}", msg.chat.id);
             self.tg.send_message_ext(
