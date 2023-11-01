@@ -135,7 +135,7 @@ impl TgBot {
             copt.restart = true;
             copt.system_prompt = Some(DEFAULT_PROMPT);
 
-            let root = TgBot::get_root_message(&placeholder);
+            let root = TgBot::get_root_message(msg);
             let root_ptr = TgBot::get_message_ptr(root);
             let chat_ctx =
                 store_flows::get(&root_ptr).unwrap_or(serde_json::Value::String(root_ptr));
@@ -150,7 +150,7 @@ impl TgBot {
                 chat_ctx_id
             );
 
-            let res = match self
+            match self
                 .openai
                 .chat_completion(chat_ctx_id, question, &copt)
                 .await
@@ -163,13 +163,7 @@ impl TgBot {
                     placeholder.id,
                     "Sorry, an error has occured. Please try again later.",
                 ),
-            };
-
-            if let Ok(ref edited) = res {
-                TgBot::set_message_context(edited, &chat_ctx);
             }
-
-            res
         } else {
             log::info!("force reply: {}", msg.chat.id);
             self.tg.send_message_ext(
