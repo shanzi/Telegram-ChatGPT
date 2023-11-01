@@ -145,10 +145,11 @@ impl TgBot {
             let chat_ptr = chat_ctx.as_str().unwrap();
             let chat_ctx_id = format!("ctx--{}", chat_ptr);
             log::info!(
-                "placeholder: {} root: {}, chat_ctx: {}",
+                "placeholder: {} root: {}, chat_ctx_id: {}, chat_ctx: {}",
                 placeholder.id,
                 root.id,
-                chat_ctx_id
+                chat_ctx_id,
+                store_flows::get(&chat_ctx_id).unwrap_or("None".into())
             );
 
             match self
