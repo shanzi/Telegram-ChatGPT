@@ -1,4 +1,4 @@
-use std::fmt;
+use std::fmt::{self, format};
 
 use crate::tgext::TgExt;
 use flowsnet_platform_sdk::logger;
@@ -135,26 +135,22 @@ impl TgBot {
             copt.restart = true;
             copt.system_prompt = Some(DEFAULT_PROMPT);
 
-            let mut root = &placeholder;
-            while root.reply_to_message().is_some() {
-                root = &root.reply_to_message().unwrap();
-            }
+            let root = TgBot::get_root_message(&placeholder);
+            let root_ptr = TgBot::get_message_ptr(root);
+            let chat_ctx =
+                store_flows::get(&root_ptr).unwrap_or(serde_json::Value::String(root_ptr));
 
-            log::info!("pointers root: {}", root.id);
-            let chat_ctx_id = format!("ctx--{}-{}", root.chat.id, root.id);
+            TgBot::set_message_context(&placeholder, &chat_ctx);
 
-            match self
-                .openai
-                .chat_completion(&chat_ctx_id, question, &copt)
-                .await
-            {
+            let chat_id = chat_ctx.as_str().unwrap();
+            match self.openai.chat_completion(chat_id, question, &copt).await {
                 Ok(resp) => self
                     .tg
                     .edit_message_markdown(msg.chat.id, placeholder.id, resp.choice),
                 Err(_) => self.tg.edit_message_text(
                     msg.chat.id,
                     placeholder.id,
-                    "Sorry, an error has occured. Please try again later",
+                    "Sorry, an error has occured. Please try again later.",
                 ),
             }
         } else {
@@ -170,5 +166,29 @@ impl TgBot {
     fn handle_nihongo(&self, msg: &Message) -> anyhow::Result<tg_flows::Message> {
         self.tg
             .reply_to_message(msg, "すみません、この機能はまだ使えません")
+    }
+
+    fn get_message_ptr(msg: &Message) -> String {
+        format!("ptr--{}-{}", msg.chat.id, msg.id)
+    }
+
+    fn get_root_message(msg: &Message) -> &Message {
+        let mut root = msg;
+        while root.reply_to_message().is_some() {
+            root = root.reply_to_message().unwrap();
+        }
+        root
+    }
+
+    fn set_message_context(msg: &Message, ctx: &serde_json::Value) {
+        let mut root = msg;
+        loop {
+            store_flows::set(&TgBot::get_message_ptr(root), ctx.clone(), None);
+            if let Some(reply) = root.reply_to_message() {
+                root = reply;
+            } else {
+                return;
+            }
+        }
     }
 }
