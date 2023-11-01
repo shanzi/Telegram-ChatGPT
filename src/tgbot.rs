@@ -131,7 +131,7 @@ impl TgBot {
 
             let mut copt = ChatOptions::default();
 
-            copt.model = ChatModel::GPT35Turbo16K;
+            copt.model = ChatModel::GPT4;
             copt.restart = false;
             copt.system_prompt = Some(DEFAULT_PROMPT);
 
