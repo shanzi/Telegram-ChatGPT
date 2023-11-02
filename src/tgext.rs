@@ -96,6 +96,7 @@ impl TgExt for Telegram {
             "text": escape_markdown(text.into()),
             "reply_markup": markup_value,
         });
+        log::info!("send message ext: {}", &body);
         self.request(tg_flows::Method::SendMessage, body.to_string().as_bytes())
     }
 
