@@ -170,6 +170,7 @@ impl TgBot {
             log::info!("force reply: {}", msg.chat.id);
             self.tg.send_message_ext(
                 msg.chat.id,
+                None,
                 "How can I help you?",
                 Some(tg_flows::ReplyMarkup::ForceReply(ForceReply::new())),
             )
@@ -177,8 +178,27 @@ impl TgBot {
     }
 
     fn handle_nihongo(&self, msg: &Message) -> anyhow::Result<tg_flows::Message> {
-        self.tg
-            .reply_to_message(msg, "すみません、この機能はまだ使えません")
+        let mut keyboard = tg_flows::InlineKeyboardMarkup::default();
+        keyboard = keyboard.append_row(vec![
+            tg_flows::InlineKeyboardButton::new(
+                "翻訳",
+                tg_flows::InlineKeyboardButtonKind::CallbackData("translate".into()),
+            ),
+            tg_flows::InlineKeyboardButton::new(
+                "説明",
+                tg_flows::InlineKeyboardButtonKind::CallbackData("explain".into()),
+            ),
+        ]);
+        keyboard = keyboard.append_row(vec![tg_flows::InlineKeyboardButton::new(
+            "戻る",
+            tg_flows::InlineKeyboardButtonKind::CallbackData("cancel".into()),
+        )]);
+        self.tg.send_message_ext(
+            msg.chat.id,
+            Some(&msg.id),
+            "どのようにおてつだいでくますか？",
+            Some(tg_flows::ReplyMarkup::InlineKeyboard(keyboard)),
+        )
     }
 
     fn get_message_ptr(msg: &Message) -> String {

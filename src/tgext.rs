@@ -13,6 +13,7 @@ pub trait TgExt {
     fn send_message_ext<T>(
         &self,
         chat_id: ChatId,
+        reploy_to: Option<&MessageId>,
         text: T,
         reply_markup: Option<ReplyMarkup>,
     ) -> anyhow::Result<Message>
@@ -80,6 +81,7 @@ impl TgExt for Telegram {
     fn send_message_ext<T>(
         &self,
         chat_id: ChatId,
+        reply_to: Option<&MessageId>,
         text: T,
         reply_markup: Option<ReplyMarkup>,
     ) -> anyhow::Result<Message>
@@ -90,8 +92,13 @@ impl TgExt for Telegram {
             Some(markup) => serde_json::to_value(markup)?,
             _ => serde_json::Value::Null,
         };
+        let messageId = match reply_to {
+            Some(id) => serde_json::to_value(id)?,
+            _ => serde_json::Value::Null,
+        };
         let body = serde_json::json!({
             "chat_id": chat_id,
+            "reply_to_message_id": messageId,
             "parse_mode": "MarkdownV2",
             "text": escape_markdown(text.into()),
             "reply_markup": markup_value,
