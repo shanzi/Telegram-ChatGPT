@@ -20,11 +20,12 @@ pub trait TgExt {
     where
         T: Into<String>;
 
-    fn edit_message_markdown<T>(
+    fn edit_message_text_ext<T>(
         &self,
         chat_id: ChatId,
         message_id: MessageId,
         text: T,
+        reply_markup: Option<ReplyMarkup>,
     ) -> anyhow::Result<Message>
     where
         T: Into<String>;
@@ -92,13 +93,13 @@ impl TgExt for Telegram {
             Some(markup) => serde_json::to_value(markup)?,
             _ => serde_json::Value::Null,
         };
-        let messageId = match reply_to {
+        let message_id = match reply_to {
             Some(id) => serde_json::to_value(id)?,
             _ => serde_json::Value::Null,
         };
         let body = serde_json::json!({
             "chat_id": chat_id,
-            "reply_to_message_id": messageId,
+            "reply_to_message_id": message_id,
             "parse_mode": "MarkdownV2",
             "text": escape_markdown(text.into()),
             "reply_markup": markup_value,
@@ -107,21 +108,27 @@ impl TgExt for Telegram {
         self.request(tg_flows::Method::SendMessage, body.to_string().as_bytes())
     }
 
-    fn edit_message_markdown<T>(
+    fn edit_message_text_ext<T>(
         &self,
         chat_id: ChatId,
         message_id: MessageId,
         text: T,
+        reply_markup: Option<ReplyMarkup>,
     ) -> anyhow::Result<Message>
     where
         T: Into<String>,
     {
         let text: String = text.into();
+        let markup_value = match reply_markup {
+            Some(markup) => serde_json::to_value(markup)?,
+            _ => serde_json::Value::Null,
+        };
         let body = serde_json::json!({
             "chat_id": chat_id,
             "message_id": message_id.0,
             "parse_mode": "MarkdownV2",
             "text": escape_markdown(&text),
+            "reply_markup": markup_value,
         });
         match self.request(
             tg_flows::Method::EditMessageText,
