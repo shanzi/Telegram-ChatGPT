@@ -7,6 +7,7 @@ use openai_flows::{
     chat::{ChatModel, ChatOptions},
     OpenAIFlows,
 };
+use serde::{Deserialize, Serialize};
 use tg_flows::{
     BotCommand, CallbackQuery, ChatId, ForceReply, InlineKeyboardButton, InlineKeyboardMarkup,
     Message, ReplyMarkup, Telegram, Update, UpdateKind,
@@ -22,6 +23,155 @@ You should format your answers into markdown format if necessary.
 If you answer includes codeblocks, please make sure you will specify the name
 of the programming language with proper syntax in markdown format.
 "#;
+
+const NIHONGO_TRANSLATE_PROMPT: &str = r#"
+You are now helping the user to learn Japanese.
+You should act as a translate machine and please translate everything the user sent to you into Japanese direcly.
+You can provide explanation on keywords in the Japanese translation provide pronounce annotation in hiragana.
+If the user sent you Japanese, you should translate them into English and correct the user if there is any obvious mistake.
+"#;
+
+const NIHONGO_EXPLAIN_PROMPT: &str = r#"
+You are now helping the user to learn Japanese.
+If the user sent you a piece of text in Japanese, you should explain the grammar and keywords.
+You can explain by break down the sentences and provide pronounce annotation in hiragana.
+If the user ask you a question in English, you should translate it into Japanese and explain your translation.
+You can also answer the user's chat from your own knowledge.
+You are encouraged to provide background information of a famous historical place.
+If you feel there is a better way to say something, feel free to correct the user.
+"#;
+
+const NIHONGO_MOCK_SCENE_PROMPT: &str = r#"
+You are now helping the users to learn Japanese.
+You should always speak Japanese in the conversation.
+You are now in mock conversation mode, in this mode, you should act as a role in a conversation scene.
+When the user send you a message, you should reply based on your role.
+If what the user has sent you is obviously not correct in terms of grammar or usage of words, you can first correct the users and provide an explanation.
+If you are replying to the user with some rarely used words, please provide the translation of them after the reply.
+If the user send you a message in English, please tell the user how to express the same meaning in Japanese before replying under your role.
+"#;
+
+const NIHONGO_MOCK_SCENE_CAFE_PROMPT: &str = r#"
+Your role is defined as follow:
+You are a waiter in a cafe.
+The cafe provide all kinds of coffee from espresso to pour over.
+The cafe also sell baked whole beans.
+You should help the user to order a cup of coffee.
+When you are using any Japanese words about origins of coffee, flaver, and other technique about coffee, please emphasize the word with markdown.
+"#;
+
+const NIHONGO_MOCK_SCENE_RESTAURANT_PROMPT: &str = r#"
+Your role is defined as follow:
+You are a waiter in a restaurant.
+You are helping the user to order a dish.
+You can recommend some dishes to the user.
+When you are using any Japanese words about food, vegetables, fruit, dishes, spice, flavor and drinks, please semphasize the word with markdown.
+"#;
+
+const NIHONGO_MOCK_SCENE_CLOTHES_SHOP_PROMPT: &str = r#"
+Your role is defined as follow:
+You are a shopping guide in a clothes shop.
+The clothes shop sells all kinds of clothes and shoes.
+You can guide the user per your understanding of the fashion in Japan.
+You can pretend the shop has a fitting room and let the user try the clothes or shoes.
+When you are using any Japanese words about clothes, style, and other fashion related words, please emphasize the word with markdown.
+"#;
+
+const NIHONGO_MOCK_SCENE_STREET_PROMPT: &str = r#"
+Your role is defined as follow:
+You are a passers-by on the street who have just met the user.
+You want to help the user know about the city, street and nearby.
+You can first ask the user about where the user is at and where the user want to go.
+When you are using any Japanese words about location, direction and other motion related words, please emphasize the word with markdown. 
+"#;
+
+const NIHONGO_MOCK_SCENE_SMALL_TALK_PROMPT: &str = r#"
+Your role is defined as follow:
+You are a passers-by who have just met the user.
+You and the user are going to have a random small talk.
+The topic can vary from weather to habbit.
+You can start by picking a random topic.
+"#;
+
+#[derive(Clone, Serialize, Deserialize)]
+enum TgBotPrompt {
+    Default,
+    NihongoTranslate,
+    NihongoExplain,
+    NihongoSceneMockCafe,
+    NihongoSceneMockRestaurant,
+    NihongoSceneMockClothesShop,
+    NihongoSceneMockStreet,
+    NihongoSceneMockSmallTalk,
+}
+
+impl TgBotPrompt {
+    fn id(&self) -> &'static str {
+        match self {
+            TgBotPrompt::NihongoTranslate => "nihongo-translate",
+            TgBotPrompt::NihongoExplain => "nihongo-explain",
+            TgBotPrompt::NihongoSceneMockCafe => "nihongo-scene-mock-cafe",
+            TgBotPrompt::NihongoSceneMockRestaurant => "nihongo-scene-mock-restaurant",
+            TgBotPrompt::NihongoSceneMockClothesShop => "nihongo-scene-mock-clothes-shop",
+            TgBotPrompt::NihongoSceneMockStreet => "nihongo-scene-mock-street",
+            TgBotPrompt::NihongoSceneMockSmallTalk => "nihongo-scene-mock-small-talk",
+            _ => "default",
+        }
+    }
+
+    fn prompt(&self) -> String {
+        match self {
+            TgBotPrompt::NihongoTranslate => [DEFAULT_PROMPT, NIHONGO_TRANSLATE_PROMPT].join("\n"),
+            TgBotPrompt::NihongoExplain => [DEFAULT_PROMPT, NIHONGO_EXPLAIN_PROMPT].join("\n"),
+            TgBotPrompt::NihongoSceneMockCafe => [
+                DEFAULT_PROMPT,
+                NIHONGO_MOCK_SCENE_PROMPT,
+                NIHONGO_MOCK_SCENE_CAFE_PROMPT,
+            ]
+            .join("\n"),
+            TgBotPrompt::NihongoSceneMockRestaurant => [
+                DEFAULT_PROMPT,
+                NIHONGO_MOCK_SCENE_PROMPT,
+                NIHONGO_MOCK_SCENE_RESTAURANT_PROMPT,
+            ]
+            .join("\n"),
+            TgBotPrompt::NihongoSceneMockClothesShop => [
+                DEFAULT_PROMPT,
+                NIHONGO_MOCK_SCENE_PROMPT,
+                NIHONGO_MOCK_SCENE_CLOTHES_SHOP_PROMPT,
+            ]
+            .join("\n"),
+            TgBotPrompt::NihongoSceneMockStreet => [
+                DEFAULT_PROMPT,
+                NIHONGO_MOCK_SCENE_PROMPT,
+                NIHONGO_MOCK_SCENE_STREET_PROMPT,
+            ]
+            .join("\n"),
+            TgBotPrompt::NihongoSceneMockSmallTalk => [
+                DEFAULT_PROMPT,
+                NIHONGO_MOCK_SCENE_PROMPT,
+                NIHONGO_MOCK_SCENE_SMALL_TALK_PROMPT,
+            ]
+            .join("\n"),
+            _ => DEFAULT_PROMPT.to_owned(),
+        }
+    }
+}
+
+impl From<&str> for TgBotPrompt {
+    fn from(value: &str) -> Self {
+        match value {
+            "nihongo-translate" => TgBotPrompt::NihongoTranslate,
+            "nihongo-explain" => TgBotPrompt::NihongoExplain,
+            "nihongo-scene-mock-cafe" => TgBotPrompt::NihongoSceneMockCafe,
+            "nihongo-scene-mock-restaurant" => TgBotPrompt::NihongoSceneMockRestaurant,
+            "nihongo-scene-mock-clothes-shop" => TgBotPrompt::NihongoSceneMockClothesShop,
+            "nihongo-scene-mock-street" => TgBotPrompt::NihongoSceneMockStreet,
+            "nihongo-scene-mock-small-talk" => TgBotPrompt::NihongoSceneMockSmallTalk,
+            _ => TgBotPrompt::Default,
+        }
+    }
+}
 
 #[derive(Clone)]
 enum TgBotCommand {
@@ -147,6 +297,12 @@ impl fmt::Display for TgBotCommand {
     }
 }
 
+#[derive(Clone, Serialize, Deserialize)]
+struct TgBotContext {
+    id: String,
+    prompt: TgBotPrompt,
+}
+
 pub struct TgBot {
     tg: Telegram,
     openai: OpenAIFlows,
@@ -220,6 +376,28 @@ impl TgBot {
             // ignore callback result
             let _ = self.set_typing(msg.chat.id);
 
+            let root = TgBot::get_root_message(msg);
+            let root_ptr = TgBot::get_message_ptr(root);
+            let chat_ctx = store_flows::get(&root_ptr)
+                .and_then(|v| serde_json::from_value(v).ok())
+                .unwrap_or(TgBotContext {
+                    id: root_ptr,
+                    prompt: TgBotPrompt::Default,
+                });
+
+            TgBot::set_message_context(&placeholder, &serde_json::to_value(&chat_ctx).unwrap());
+
+            let chat_ptr = chat_ctx.id.as_str();
+            let chat_ctx_id = format!("ctx--{}", chat_ptr);
+            log::info!(
+                "placeholder: {} root: {}, chat_ctx_id: {}, chat_prompt: {}, chat_ctx: {}",
+                placeholder.id,
+                root.id,
+                chat_ctx_id,
+                chat_ctx.prompt.id(),
+                store_flows::get(&chat_ctx_id).unwrap_or("None".into())
+            );
+
             let mut copt = ChatOptions::default();
 
             let lm = store_flows::get("settings.language.model")
@@ -230,25 +408,10 @@ impl TgBot {
                 Some("gpt3.5-turbo") => copt.model = ChatModel::GPT35Turbo,
                 _ => copt.model = ChatModel::GPT35Turbo16K,
             }
+
+            let prompt = chat_ctx.prompt.prompt();
             copt.restart = false;
-            copt.system_prompt = Some(DEFAULT_PROMPT);
-
-            let root = TgBot::get_root_message(msg);
-            let root_ptr = TgBot::get_message_ptr(root);
-            let chat_ctx =
-                store_flows::get(&root_ptr).unwrap_or(serde_json::Value::String(root_ptr));
-
-            TgBot::set_message_context(&placeholder, &chat_ctx);
-
-            let chat_ptr = chat_ctx.as_str().unwrap();
-            let chat_ctx_id = format!("ctx--{}", chat_ptr);
-            log::info!(
-                "placeholder: {} root: {}, chat_ctx_id: {}, chat_ctx: {}",
-                placeholder.id,
-                root.id,
-                chat_ctx_id,
-                store_flows::get(&chat_ctx_id).unwrap_or("None".into())
-            );
+            copt.system_prompt = Some(prompt.as_str());
 
             match self
                 .openai
@@ -349,22 +512,28 @@ impl TgBot {
         button: &TgBotInlineButton,
     ) -> anyhow::Result<tg_flows::Message> {
         match button {
-            TgBotInlineButton::NihongoTranslate => self.tg.send_message_ext(
-                msg.chat.id,
-                Some(&msg.id),
-                "Ok, I can translate text from and to japanese for you. Please give your input.",
-                Some(ReplyMarkup::ForceReply(ForceReply::default())),
-            ),
-            TgBotInlineButton::NihongoExplain => self.tg.send_message_ext(
-                msg.chat.id,
-                Some(&msg.id),
-                "Ok, I can explain text about japanese for you. Please give your input.",
-                Some(ReplyMarkup::ForceReply(ForceReply::default())),
-            ),
+            TgBotInlineButton::NihongoTranslate => self
+                .tg
+                .send_message_ext(
+                    msg.chat.id,
+                    Some(&msg.id),
+                    "日本語に翻訳しています",
+                    Some(ReplyMarkup::ForceReply(ForceReply::default())),
+                )
+                .map(|msg| self.init_message_prompt(msg, TgBotPrompt::NihongoTranslate)),
+            TgBotInlineButton::NihongoExplain => self
+                .tg
+                .send_message_ext(
+                    msg.chat.id,
+                    Some(&msg.id),
+                    "日本語の言葉を説明しています",
+                    Some(ReplyMarkup::ForceReply(ForceReply::default())),
+                )
+                .map(|msg| self.init_message_prompt(msg, TgBotPrompt::NihongoExplain)),
             TgBotInlineButton::NihongoSceneMock => self.tg.send_message_ext(
                 msg.chat.id,
                 Some(&msg.id),
-                "Ok, I can mock a conversation scene for you, choose your scene.",
+                "モック会話しています、何な場面をほしいですか",
                 Some(ReplyMarkup::InlineKeyboard(
                     InlineKeyboardMarkup::default()
                         .append_row(vec![TgBotInlineButton::NihongoSceneMockCafe.into()])
@@ -385,36 +554,51 @@ impl TgBot {
         button: &TgBotInlineButton,
     ) -> anyhow::Result<tg_flows::Message> {
         match button {
-            TgBotInlineButton::NihongoSceneMockRestaurant => self.tg.send_message_ext(
-                msg.chat.id,
-                Some(&msg.id),
-                "You are at a restaurant!",
-                Some(ReplyMarkup::ForceReply(ForceReply::default())),
-            ),
-            TgBotInlineButton::NihongoSceneMockCafe => self.tg.send_message_ext(
-                msg.chat.id,
-                Some(&msg.id),
-                "You are at a cafe!",
-                Some(ReplyMarkup::ForceReply(ForceReply::default())),
-            ),
-            TgBotInlineButton::NihongoSceneMockClothesShop => self.tg.send_message_ext(
-                msg.chat.id,
-                Some(&msg.id),
-                "You are at a clothes shop!",
-                Some(ReplyMarkup::ForceReply(ForceReply::default())),
-            ),
-            TgBotInlineButton::NihongoSceneMockStreet => self.tg.send_message_ext(
-                msg.chat.id,
-                Some(&msg.id),
-                "You are at a street!",
-                Some(ReplyMarkup::ForceReply(ForceReply::default())),
-            ),
-            TgBotInlineButton::NihongoSceneMockSmallTalk => self.tg.send_message_ext(
-                msg.chat.id,
-                Some(&msg.id),
-                "You are having a small talk!",
-                Some(ReplyMarkup::ForceReply(ForceReply::default())),
-            ),
+            TgBotInlineButton::NihongoSceneMockCafe => self
+                .tg
+                .send_message_ext(
+                    msg.chat.id,
+                    Some(&msg.id),
+                    "カフェでいます",
+                    Some(ReplyMarkup::ForceReply(ForceReply::default())),
+                )
+                .map(|msg| self.init_message_prompt(msg, TgBotPrompt::NihongoSceneMockCafe)),
+            TgBotInlineButton::NihongoSceneMockRestaurant => self
+                .tg
+                .send_message_ext(
+                    msg.chat.id,
+                    Some(&msg.id),
+                    "レストランでいます",
+                    Some(ReplyMarkup::ForceReply(ForceReply::default())),
+                )
+                .map(|msg| self.init_message_prompt(msg, TgBotPrompt::NihongoSceneMockRestaurant)),
+            TgBotInlineButton::NihongoSceneMockClothesShop => self
+                .tg
+                .send_message_ext(
+                    msg.chat.id,
+                    Some(&msg.id),
+                    "服屋でいます",
+                    Some(ReplyMarkup::ForceReply(ForceReply::default())),
+                )
+                .map(|msg| self.init_message_prompt(msg, TgBotPrompt::NihongoSceneMockClothesShop)),
+            TgBotInlineButton::NihongoSceneMockStreet => self
+                .tg
+                .send_message_ext(
+                    msg.chat.id,
+                    Some(&msg.id),
+                    "街でいます",
+                    Some(ReplyMarkup::ForceReply(ForceReply::default())),
+                )
+                .map(|msg| self.init_message_prompt(msg, TgBotPrompt::NihongoSceneMockStreet)),
+            TgBotInlineButton::NihongoSceneMockSmallTalk => self
+                .tg
+                .send_message_ext(
+                    msg.chat.id,
+                    Some(&msg.id),
+                    "雑談しています",
+                    Some(ReplyMarkup::ForceReply(ForceReply::default())),
+                )
+                .map(|msg| self.init_message_prompt(msg, TgBotPrompt::NihongoSceneMockSmallTalk)),
             TgBotInlineButton::NihongoSceneMockGoBack => self.handle_nihongo(msg, true),
             _ => bail!("wrong button"),
         }
@@ -466,5 +650,15 @@ impl TgBot {
                 return;
             }
         }
+    }
+
+    fn init_message_prompt(&self, msg: Message, prompt: TgBotPrompt) -> Message {
+        let ctx = serde_json::to_value(TgBotContext {
+            id: Self::get_message_ptr(&msg),
+            prompt,
+        })
+        .unwrap();
+        Self::set_message_context(&msg, &ctx);
+        msg
     }
 }
