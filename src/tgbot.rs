@@ -349,21 +349,21 @@ impl TgBot {
         button: &TgBotInlineButton,
     ) -> anyhow::Result<tg_flows::Message> {
         match button {
-            TgBotInlineButton::NihongoTranslate => self.tg.edit_message_text_ext(
+            TgBotInlineButton::NihongoTranslate => self.tg.send_message_ext(
                 msg.chat.id,
-                msg.id,
+                Some(&msg.id),
                 "Ok, I can translate text from and to japanese for you. Please give your input.",
                 Some(ReplyMarkup::ForceReply(ForceReply::default())),
             ),
-            TgBotInlineButton::NihongoExplain => self.tg.edit_message_text_ext(
+            TgBotInlineButton::NihongoExplain => self.tg.send_message_ext(
                 msg.chat.id,
-                msg.id,
+                Some(&msg.id),
                 "Ok, I can explain text about japanese for you. Please give your input.",
                 Some(ReplyMarkup::ForceReply(ForceReply::default())),
             ),
-            TgBotInlineButton::NihongoSceneMock => self.tg.edit_message_text_ext(
+            TgBotInlineButton::NihongoSceneMock => self.tg.send_message_ext(
                 msg.chat.id,
-                msg.id,
+                Some(&msg.id),
                 "Ok, I can mock a conversation scene for you, choose your scene.",
                 Some(ReplyMarkup::InlineKeyboard(
                     InlineKeyboardMarkup::default()
@@ -385,33 +385,33 @@ impl TgBot {
         button: &TgBotInlineButton,
     ) -> anyhow::Result<tg_flows::Message> {
         match button {
-            TgBotInlineButton::NihongoSceneMockRestaurant => self.tg.edit_message_text_ext(
+            TgBotInlineButton::NihongoSceneMockRestaurant => self.tg.send_message_ext(
                 msg.chat.id,
-                msg.id,
+                Some(&msg.id),
                 "You are at a restaurant!",
                 Some(ReplyMarkup::ForceReply(ForceReply::default())),
             ),
-            TgBotInlineButton::NihongoSceneMockCafe => self.tg.edit_message_text_ext(
+            TgBotInlineButton::NihongoSceneMockCafe => self.tg.send_message_ext(
                 msg.chat.id,
-                msg.id,
+                Some(&msg.id),
                 "You are at a cafe!",
                 Some(ReplyMarkup::ForceReply(ForceReply::default())),
             ),
-            TgBotInlineButton::NihongoSceneMockClothesShop => self.tg.edit_message_text_ext(
+            TgBotInlineButton::NihongoSceneMockClothesShop => self.tg.send_message_ext(
                 msg.chat.id,
-                msg.id,
+                Some(&msg.id),
                 "You are at a clothes shop!",
                 Some(ReplyMarkup::ForceReply(ForceReply::default())),
             ),
-            TgBotInlineButton::NihongoSceneMockStreet => self.tg.edit_message_text_ext(
+            TgBotInlineButton::NihongoSceneMockStreet => self.tg.send_message_ext(
                 msg.chat.id,
-                msg.id,
+                Some(&msg.id),
                 "You are at a street!",
                 Some(ReplyMarkup::ForceReply(ForceReply::default())),
             ),
-            TgBotInlineButton::NihongoSceneMockSmallTalk => self.tg.edit_message_text_ext(
+            TgBotInlineButton::NihongoSceneMockSmallTalk => self.tg.send_message_ext(
                 msg.chat.id,
-                msg.id,
+                Some(&msg.id),
                 "You are having a small talk!",
                 Some(ReplyMarkup::ForceReply(ForceReply::default())),
             ),
