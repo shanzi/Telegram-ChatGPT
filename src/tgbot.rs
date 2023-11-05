@@ -442,8 +442,8 @@ impl TgBot {
     fn handle_nihongo(&self, msg: &Message, edit: bool) -> anyhow::Result<tg_flows::Message> {
         let keyboard = tg_flows::InlineKeyboardMarkup::default()
             .append_row(vec![
-                TgBotInlineButton::NihongoExplain.into(),
                 TgBotInlineButton::NihongoTranslate.into(),
+                TgBotInlineButton::NihongoExplain.into(),
             ])
             .append_row(vec![TgBotInlineButton::NihongoSceneMock.into()]);
 
