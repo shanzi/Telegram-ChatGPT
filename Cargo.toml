@@ -11,6 +11,7 @@ crate-type = ["cdylib"]
 target = "wasm32-wasi"
 
 [dependencies]
+nom = "7.1.3"
 openai-flows = "0.9.0"
 tg-flows = "0.3"
 store-flows = "0.3"

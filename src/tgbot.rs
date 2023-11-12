@@ -177,6 +177,7 @@ impl From<&str> for TgBotPrompt {
 enum TgBotCommand {
     Ask,
     Nihongo,
+    Settings,
     Help,
 }
 
@@ -274,7 +275,12 @@ impl From<TgBotInlineButton> for InlineKeyboardButton {
 
 impl TgBotCommand {
     fn root_commands() -> Vec<TgBotCommand> {
-        vec![TgBotCommand::Ask, TgBotCommand::Nihongo, TgBotCommand::Help]
+        vec![
+            TgBotCommand::Ask,
+            TgBotCommand::Nihongo,
+            TgBotCommand::Settings,
+            TgBotCommand::Help,
+        ]
     }
 }
 
@@ -285,6 +291,7 @@ impl From<TgBotCommand> for BotCommand {
             TgBotCommand::Nihongo => {
                 BotCommand::new("nihongo", "learn japanese by sentences and questions")
             }
+            TgBotCommand::Settings => BotCommand::new("settings", "adjust settings of the bot"),
             TgBotCommand::Help => BotCommand::new("help", "show help messages"),
         }
     }
@@ -360,6 +367,10 @@ impl TgBot {
                     .join("\n")
             ),
         )
+    }
+
+    pub fn set_bot_commands(&self) -> anyhow::Result<bool> {
+        self.tg.set_my_commands(TgBotCommand::root_commands())
     }
 
     async fn handle_ask(&self, msg: &Message) -> anyhow::Result<tg_flows::Message> {

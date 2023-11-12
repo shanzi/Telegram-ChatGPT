@@ -5,7 +5,7 @@ pub trait TgExt {
     where
         T: Into<String>;
 
-    fn set_my_commands<T>(&self, cmds: T) -> anyhow::Result<Message>
+    fn set_my_commands<T>(&self, cmds: T) -> anyhow::Result<bool>
     where
         T: IntoIterator,
         T::Item: Into<BotCommand>;
@@ -66,7 +66,7 @@ impl TgExt for Telegram {
         self.request(tg_flows::Method::SendMessage, body.to_string().as_bytes())
     }
 
-    fn set_my_commands<T>(&self, cmds: T) -> anyhow::Result<Message>
+    fn set_my_commands<T>(&self, cmds: T) -> anyhow::Result<bool>
     where
         T: IntoIterator,
         T::Item: Into<BotCommand>,
