@@ -115,7 +115,10 @@ impl TgExt for Telegram {
             tg_flows::Method::EditMessageText,
             body.to_string().as_bytes(),
         ) {
-            Err(_) => self.edit_message_text(chat_id, message_id, text),
+            Err(_) => {
+                log::error!("wrong escape_markdown: {}", body);
+                self.edit_message_text(chat_id, message_id, text)
+            }
             res => res,
         }
     }
