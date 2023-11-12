@@ -108,14 +108,14 @@ impl TgExt for Telegram {
             "chat_id": chat_id,
             "message_id": message_id.0,
             "parse_mode": "MarkdownV2",
-            "text": escape_markdown(text)?,
+            "text": escape_markdown(&text)?,
             "reply_markup": markup_value,
         });
         match self.request(
             tg_flows::Method::EditMessageText,
             body.to_string().as_bytes(),
         ) {
-            Err(_) => self.edit_message_text(chat_id, message_id, "failed to process markdown"),
+            Err(_) => self.edit_message_text(chat_id, message_id, text),
             res => res,
         }
     }
