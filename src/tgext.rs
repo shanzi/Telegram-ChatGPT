@@ -100,17 +100,21 @@ impl TgExt for Telegram {
         T: Into<String>,
     {
         let text: String = text.into();
-        let markup_value = match reply_markup {
-            Some(markup) => serde_json::to_value(markup)?,
-            _ => serde_json::Value::Null,
+        let body = match reply_markup {
+            Some(markup) => serde_json::json!({
+                "chat_id": chat_id,
+                "message_id": message_id.0,
+                "parse_mode": "MarkdownV2",
+                "text": escape_markdown(&text)?,
+                "reply_markup": serde_json::to_value(markup)?,
+            }),
+            _ => serde_json::json!({
+                "chat_id": chat_id,
+                "message_id": message_id.0,
+                "parse_mode": "MarkdownV2",
+                "text": escape_markdown(&text)?,
+            }),
         };
-        let body = serde_json::json!({
-            "chat_id": chat_id,
-            "message_id": message_id.0,
-            "parse_mode": "MarkdownV2",
-            "text": escape_markdown(&text)?,
-            "reply_markup": markup_value,
-        });
         match self.request(
             tg_flows::Method::EditMessageText,
             body.to_string().as_bytes(),
