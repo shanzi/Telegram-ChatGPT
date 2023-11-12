@@ -1,3 +1,4 @@
+use crate::markdown::escape_markdown;
 use tg_flows::{BotCommand, ChatId, Message, MessageId, ReplyMarkup, Telegram};
 
 pub trait TgExt {
@@ -29,26 +30,6 @@ pub trait TgExt {
     ) -> anyhow::Result<Message>
     where
         T: Into<String>;
-}
-
-fn escape_markdown<T>(text: T) -> String
-where
-    T: AsRef<str>,
-{
-    let mut escaped_string = String::new();
-    for c in text.as_ref().chars() {
-        match c {
-            // TODO: support links
-            '#' | '.' | '!' | '+' | '-' | '=' | '{' | '}' | '[' | ']' | '(' | ')' => {
-                escaped_string.push('\\');
-            }
-            _ => {}
-        }
-
-        escaped_string.push(c);
-    }
-
-    escaped_string
 }
 
 impl TgExt for Telegram {
@@ -101,7 +82,7 @@ impl TgExt for Telegram {
             "chat_id": chat_id,
             "reply_to_message_id": message_id,
             "parse_mode": "MarkdownV2",
-            "text": escape_markdown(text.into()),
+            "text": escape_markdown(text.into())?,
             "reply_markup": markup_value,
         });
         log::info!("send message ext: {}", &body);
@@ -127,14 +108,14 @@ impl TgExt for Telegram {
             "chat_id": chat_id,
             "message_id": message_id.0,
             "parse_mode": "MarkdownV2",
-            "text": escape_markdown(&text),
+            "text": escape_markdown(text)?,
             "reply_markup": markup_value,
         });
         match self.request(
             tg_flows::Method::EditMessageText,
             body.to_string().as_bytes(),
         ) {
-            Err(_) => self.edit_message_text(chat_id, message_id, text),
+            Err(_) => self.edit_message_text(chat_id, message_id, "failed to process markdown"),
             res => res,
         }
     }

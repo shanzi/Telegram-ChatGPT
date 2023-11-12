@@ -1,3 +1,4 @@
+mod markdown;
 mod tgbot;
 mod tgext;
 use flowsnet_platform_sdk::logger;
