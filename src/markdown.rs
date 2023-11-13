@@ -125,7 +125,7 @@ fn parse_header(input: &str) -> IResult<&str, String> {
     Ok((
         input,
         format!(
-            "`{}` __{}__",
+            "`{}` *{}*",
             escaped_for_tg(htag.into_iter().collect::<String>()),
             title
         ),
