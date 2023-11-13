@@ -1,12 +1,12 @@
 use anyhow::bail;
 use nom::{
     branch::alt,
-    bytes::complete::{escaped_transform, tag, take_while1},
+    bytes::complete::{escaped_transform, tag, take_till1, take_while1},
     character::{
-        complete::{anychar, char, multispace0, none_of, space1},
+        complete::{char, multispace0, none_of, space1},
         is_newline,
     },
-    combinator::{eof, value, verify},
+    combinator::value,
     multi::many1,
     sequence::{delimited, preceded},
     IResult,
@@ -48,47 +48,60 @@ fn escaped_for_tg(text: impl AsRef<str>) -> String {
     escaped_string
 }
 
-fn parse_escaped_chars(input: &str) -> IResult<&str, String> {
-    escaped_transform(
-        verify(anychar, |c| !is_special_char(*c) && !is_newline(*c as u8)),
-        '\\',
-        alt((
-            value("_", tag("\\_")),
-            value("*", tag("\\*")),
-            value("`", tag("\\`")),
-            value("(", tag("\\(")),
-            value(")", tag("\\)")),
-            value("[", tag("\\[")),
-            value("]", tag("\\]")),
-            value("\\", tag("\\\\")),
-        )),
-    )(input)
+fn parse_escaped_chars(paren: char) -> impl Fn(&str) -> IResult<&str, String> {
+    move |input: &str| {
+        escaped_transform(
+            take_till1(|c| c == paren || c == '\\' || is_newline(c as u8)),
+            '\\',
+            alt((
+                value("_", tag("\\_")),
+                value("*", tag("\\*")),
+                value("[", tag("\\[")),
+                value("]", tag("\\]")),
+                value("(", tag("\\(")),
+                value(")", tag("\\)")),
+                value("~", tag("\\~")),
+                value("`", tag("\\`")),
+                value(">", tag("\\>")),
+                value("#", tag("\\#")),
+                value("+", tag("\\+")),
+                value("-", tag("\\-")),
+                value("=", tag("\\=")),
+                value("|", tag("\\|")),
+                value("{", tag("\\{")),
+                value("}", tag("\\}")),
+                value(".", tag("\\.")),
+                value("!", tag("\\!")),
+                value("\\", tag("\\\\")),
+            )),
+        )(input)
+    }
 }
 
 fn parse_emphasize(input: &str) -> IResult<&str, String> {
     let (input, content) = alt((
-        delimited(tag("__"), parse_escaped_chars, tag("__")),
-        delimited(char('_'), parse_escaped_chars, char('_')),
+        delimited(tag("__"), parse_escaped_chars('_'), tag("__")),
+        delimited(char('_'), parse_escaped_chars('_'), char('_')),
     ))(input)?;
     Ok((input, format!("_{}_", escaped_for_tg(content))))
 }
 
 fn parse_bold(input: &str) -> IResult<&str, String> {
     let (input, content) = alt((
-        delimited(tag("**"), parse_escaped_chars, tag("**")),
-        delimited(char('*'), parse_escaped_chars, char('*')),
+        delimited(tag("**"), parse_escaped_chars('*'), tag("**")),
+        delimited(char('*'), parse_escaped_chars('*'), char('*')),
     ))(input)?;
     Ok((input, format!("*{}*", escaped_for_tg(content))))
 }
 
 fn parse_code(input: &str) -> IResult<&str, String> {
-    let (input, content) = delimited(char('`'), parse_escaped_chars, char('`'))(input)?;
+    let (input, content) = delimited(char('`'), parse_escaped_chars('`'), char('`'))(input)?;
     Ok((input, format!("`{}`", escaped_for_tg(content))))
 }
 
 fn parse_link(input: &str) -> IResult<&str, String> {
-    let (input, text) = delimited(char('['), parse_escaped_chars, char(']'))(input)?;
-    let (input, link) = delimited(char('('), parse_escaped_chars, char(')'))(input)?;
+    let (input, text) = delimited(char('['), parse_escaped_chars(']'), char(']'))(input)?;
+    let (input, link) = delimited(char('('), parse_escaped_chars(')'), char(')'))(input)?;
     Ok((
         input,
         format!("[{}]({})", escaped_for_tg(text), escaped_for_tg(link)),
@@ -96,7 +109,7 @@ fn parse_link(input: &str) -> IResult<&str, String> {
 }
 
 fn parse_plaintext(input: &str) -> IResult<&str, String> {
-    let (input, content) = take_while1(|c| !is_special_char(c) && !is_newline(c as u8))(input)?;
+    let (input, content) = take_till1(|c| is_special_char(c) || is_newline(c as u8))(input)?;
     Ok((input, escaped_for_tg(content)))
 }
 
@@ -140,13 +153,11 @@ fn parse_codeblock(input: &str) -> IResult<&str, String> {
     Ok((input, format!("```{}```", escaped_for_tg(content))))
 }
 
-fn parse_markdown(input: &str) -> IResult<&str, String> {
+pub fn parse_markdown(input: &str) -> IResult<&str, String> {
     let (input, lines) = many1(preceded(
         multispace0,
         alt((parse_codeblock, parse_header, parse_paragraph)),
     ))(input)?;
-
-    let (input, _) = preceded(multispace0, eof)(input)?;
     Ok((input, lines.join("\n\n")))
 }
 
