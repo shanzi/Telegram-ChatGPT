@@ -1,9 +1,9 @@
 use anyhow::bail;
 use nom::{
     branch::alt,
-    bytes::complete::{escaped_transform, tag, take_till1, take_while1},
+    bytes::complete::{escaped_transform, tag, take_till, take_till1, take_until, take_while1},
     character::{
-        complete::{char, multispace0, none_of, space1},
+        complete::{anychar, char, multispace0, none_of, space1},
         is_newline,
     },
     combinator::value,
@@ -145,11 +145,7 @@ fn parse_paragraph(input: &str) -> IResult<&str, String> {
 }
 
 fn parse_codeblock(input: &str) -> IResult<&str, String> {
-    let (input, content) = delimited(
-        tag("```"),
-        escaped_transform(none_of("\\`"), '\\', value('`', char('`'))),
-        tag("```"),
-    )(input)?;
+    let (input, content) = delimited(tag("```"), take_until("```"), tag("```"))(input)?;
     Ok((input, format!("```{}```", escaped_for_tg(content))))
 }
 
